@@ -2,10 +2,11 @@
 
 namespace Controllers;
 
-use Classes\Email;
-use Model\Registro;
-use Model\Usuario;
 use MVC\Router;
+use Classes\Email;
+use Model\Usuario;
+use Model\Registro;
+use Model\EventosRegistros;
 
 class AuthController {
     public static function login(Router $router) {
@@ -36,19 +37,25 @@ class AuthController {
                         $_SESSION['admin'] = $usuario->admin ?? null;
                         
                         //Redireccion
-                        if($usuario->admin) {
+                       if($usuario->admin) {
                             header('Location: /admin/dashboard');
                         } else {
-                            $usuario_id = $_SESSION['id'];
+                             $usuario_id = $_SESSION['id'];
                             $registro = Registro::where('usuario_id', $usuario_id);
-                            
-                            if($registro->token) {
-                                header('Location: /boleto?id='.$registro->token);
-                            } else {
+                            $tablaEventos = EventosRegistros::where('registro_id', $registro->id);
+                           
+                            if(isset($registro->token) && is_null($tablaEventos)) {                               
                                 header('Location: /finalizar-registro/conferencias');
+                                return;
+                            } elseif(isset($registro->token)) {
+                                header('Location: /boleto?id='.$registro->token);
+                                return;
+                            } elseif ($registro->token === null) {   
+                                header('Location: /finalizar-registro');
+                                return;
+                            }
                             }
 
-                        }
                     } else {
                         Usuario::setAlerta('error', 'Password Incorrecto');
                     }
@@ -62,6 +69,7 @@ class AuthController {
         $router->render('auth/login', [
             'titulo' => 'Iniciar Sesión',
             'alertas' => $alertas
+            
         ]);
     }
 
@@ -259,4 +267,3 @@ class AuthController {
         ]);
     }
 }
-

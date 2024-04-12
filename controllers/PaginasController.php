@@ -6,8 +6,12 @@ use Model\Dia;
 use Model\Hora;
 use MVC\Router;
 use Model\Evento;
+use Model\Paquete;
 use Model\Ponente;
+use Model\Usuario;
+use Model\Registro;
 use Model\Categoria;
+use Model\EventosRegistros;
 
 class PaginasController {
     public static function index(Router $router) {
@@ -46,27 +50,77 @@ class PaginasController {
         // Obtener todos los ponentes
         $ponentes = Ponente::all();
 
-        $router->render('paginas/index', [
+        if (is_auth()){
+            $nombre = $_SESSION['nombre'];
+            $usuario_id = $_SESSION['id'];
+            $registro = Registro::where('usuario_id', $usuario_id);  
+            if(isset($registro)){
+                $tablaEventos = EventosRegistros::where('registro_id', $registro->id); 
+            }      
+              
+            }
+
+    
+        $datos = [
             'titulo' => 'Inicio',
             'eventos' => $eventos_formateados,
             'ponentes_total' => $ponentes_total,
             'conferencias_total' => $conferencias_total,
             'workshops_total' => $workshops_total,
             'ponentes' => $ponentes
-        ]);
+        ];
+        
+        if (is_auth()) {
+            $datos['nombre'] = $nombre;
+            $datos['registro'] = $registro;
+            if(isset($tablaEventos)){
+                $datos['tablaEventos'] = $tablaEventos;
+            }
+        }
+        
+        $router->render('paginas/index', $datos);
     }
     public static function evento(Router $router) {
-
-        $router->render('paginas/devwebcamp', [
-            'titulo' => 'Sobre DevWebCamp'
-        ]);
+        if (is_auth()){
+            $nombre = $_SESSION['nombre']; 
+            $registro = Registro::where('usuario_id', $_SESSION['id']);
+            if(isset($registro)){
+                $tablaEventos = EventosRegistros::where('registro_id', $registro->id); 
+            }  
+            }
+                $datos = [
+                    'titulo' => 'Sobre DevWebCamp',               
+                ];
+                if (is_auth()) {
+                    $datos['nombre'] = $nombre;
+                    $datos['registro'] = $registro;
+                    if(isset($tablaEventos)){
+                        $datos['tablaEventos'] = $tablaEventos;
+                    }
+                }   
+                     
+                $router->render('paginas/devwebcamp', $datos);   
     }
     
     public static function paquetes(Router $router) {
-
-        $router->render('paginas/paquetes', [
-            'titulo' => 'Paquetes DevWebCamp'
-        ]);
+        if (is_auth()){
+            $nombre = $_SESSION['nombre'];   
+            $registro = Registro::where('usuario_id', $_SESSION['id']); 
+            if(isset($registro)){
+                $tablaEventos = EventosRegistros::where('registro_id', $registro->id); 
+            }     
+        }
+            $datos = [
+                'titulo' => 'Paquetes DevWebCamp',           
+            ];
+            if (is_auth()) {
+                $datos['nombre'] = $nombre;
+                $datos['registro'] = $registro;
+                if(isset($tablaEventos)){
+                    $datos['tablaEventos'] = $tablaEventos;
+                }
+            }
+        $router->render('paginas/paquetes', $datos);
     }
 
     public static function conferencias(Router $router) {
@@ -97,17 +151,50 @@ class PaginasController {
             }
         }
 
-
-        $router->render('paginas/conferencias', [
-            'titulo' => 'Conferencias & Workshops',
-            'eventos' => $eventos_formateados
-        ]);
+        if (is_auth()){
+            $nombre = $_SESSION['nombre'];  
+            $registro = Registro::where('usuario_id', $_SESSION['id']);    
+            if(isset($registro)){
+                $tablaEventos = EventosRegistros::where('registro_id', $registro->id); 
+            } 
+        } 
+            $datos = [
+                'titulo' => 'Conferencias & Workshops',
+                'eventos' => $eventos_formateados,         
+            ];
+            if (is_auth()) {
+                $datos['nombre'] = $nombre;
+                $datos['registro'] = $registro;
+                if(isset($tablaEventos)){
+                    $datos['tablaEventos'] = $tablaEventos;
+                }
+            }
+        $router->render('paginas/conferencias', $datos);
     }
 
     public static function error(Router $router) {
+    
 
-        $router->render('paginas/error', [
-            'titulo' => 'Página no encontrada'
-        ]);
+        if (is_auth()){
+        $nombre = $_SESSION['nombre'];
+        $registro = Registro::where('usuario_id', $_SESSION['id']);    
+        if(isset($registro)){
+            $tablaEventos = EventosRegistros::where('registro_id', $registro->id); 
+        }      
+ 
+        }
+        $datos = [
+            'titulo' => 'Página no encontrada',
+        
+        ];     
+        if (is_auth()) {
+            $datos['nombre'] = $nombre;
+            $datos['registro'] = $registro;
+            if(isset($tablaEventos)){
+                $datos['tablaEventos'] = $tablaEventos;
+            }
+        }
+        
+        $router->render('paginas/error', $datos);
     }
 }

@@ -22,7 +22,6 @@ class RegistroController {
             header('Location: /');
             return;
         }
-
         // Verificar si el usuario ya esta registrado
         $registro = Registro::where('usuario_id', $_SESSION['id']);
 
@@ -30,16 +29,25 @@ class RegistroController {
             header('Location: /boleto?id=' . urlencode($registro->token));
             return;
         }
-
-        if(isset($registro) && $registro->paquete_id === "1" && $registro->token === null) {
+        if(isset($registro) && $registro->paquete_id === "1") {      
             header('Location: /finalizar-registro/conferencias');
+            return;
         } 
-        else { header('Location: /boleto?id=' . $registro->token);}
-        return;
+        if (isset($registro->token)){      
+            header('Location: /boleto?id=' . $registro->token); 
+            return;
+        }
+        if (is_auth()){
+            $nombre = $_SESSION['nombre'];     
+            } 
+        $datos = [
+            'titulo' => 'Finalizar Registro'                   
+        ];
+        if (is_auth()) {
+            $datos['nombre'] = $nombre;
+        }
 
-        $router->render('registro/crear', [
-            'titulo' => 'Finalizar Registro'
-        ]);
+        $router->render('registro/crear', $datos);
     }
 
     public static function gratis(Router $router) {
@@ -94,16 +102,65 @@ class RegistroController {
             header('Location: /');
             return;
         }
+     
         // Llenar las tablas de referencia
         $registro->usuario = Usuario::find($registro->usuario_id);
         $registro->paquete = Paquete::find($registro->paquete_id);
+        
+        $eventos = Evento::ordenar('hora_id', 'ASC');
 
-        $router->render('registro/boleto', [
-            'titulo' => 'Asistencia a DevWebCamp',
-            'registro' => $registro
-        ]);
+        $array_filtro = ["registro_id" => $registro->id];
+        $event_regis = EventosRegistros::whereArray($array_filtro);
+        $user_registro_ids = [];
+        foreach ($event_regis as $event) {
+            $user_registro_ids[] = $event->evento_id;
+        }
+        $user_eventos = [];
+        foreach ($eventos as $evento) {
+        if (in_array($evento->id, $user_registro_ids)) {
+        $user_eventos[] = $evento;
+        }
+        }
+
+        $eventos_formateados = [];
+        foreach($user_eventos as $evento) {
+            $evento->categoria = Categoria::find($evento->categoria_id);
+            $evento->dia = Dia::find($evento->dia_id);
+            $evento->hora = Hora::find($evento->hora_id);
+            $evento->ponente = Ponente::find($evento->ponente_id);
+            
+            if($evento->dia_id === "1" && $evento->categoria_id === "1") {
+                $eventos_formateados['conferencias_v'][] = $evento;
+            }
+
+            if($evento->dia_id === "2" && $evento->categoria_id === "1") {
+                $eventos_formateados['conferencias_s'][] = $evento;
+            }
+
+            if($evento->dia_id === "1" && $evento->categoria_id === "2") {
+                $eventos_formateados['workshops_v'][] = $evento;
+            }
+
+            if($evento->dia_id === "2" && $evento->categoria_id === "2") {
+                $eventos_formateados['workshops_s'][] = $evento;
+            }
+        }     
+        if (is_auth()){
+            $nombre = $_SESSION['nombre'];
+            $tablaEventos = EventosRegistros::where('registro_id', $registro->id); 
+            }
+            $datos = [
+                'titulo' => 'Asistencia a DevWebCamp',
+                'registro' => $registro,
+                'eventos' => $eventos_formateados, 
+            ];     
+            if (is_auth()) {
+                $datos['nombre'] = $nombre;
+                $datos['tablaEventos'] = $tablaEventos;
+            }
+
+        $router->render('registro/boleto', $datos);
     }
-
 
     public static function pagar(Router $router) {
 
@@ -122,22 +179,21 @@ class RegistroController {
             $datos = $_POST;
             $datos['token'] = substr( md5(uniqid( rand(), true )), 0, 8);
             $datos['usuario_id'] = $_SESSION['id'];
-           
             try {
                 $registro = new Registro($datos);
                 $resultado = $registro->guardar();
+                
                 echo json_encode($resultado);
             } catch (\Throwable $th) {              
-            
-               echo json_encode([
+                
+                echo json_encode([
                     'resultado' => 'error'
                 ]);
             }
+            
         
         }
     }
-
-
 
     public static function conferencias(Router $router) {
  
@@ -145,10 +201,11 @@ class RegistroController {
             header('Location: /login');
             return;
         }        
-
         // Validar que el usuario tenga el plan presencial
         $usuario_id = $_SESSION['id'];
         $registro = Registro::where('usuario_id', $usuario_id);
+        
+       
 
         if(isset($registro) && $registro->paquete_id === "2") {
             header('Location: /boleto?id=' . urlencode($registro->token));
@@ -187,7 +244,6 @@ class RegistroController {
         }
         
         $regalos = Regalo::all('ASC');
-
         // Manejando el registro mediante $_POST
         if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -248,25 +304,34 @@ class RegistroController {
             } else {
                 echo json_encode(['resultado' => false]);
             }
-
             return;
 
              //Redireccionar a boleto virtual en caso de haber finalizado su registro
          if(isset($registro->regalo_id) && $registro->paquete_id === "1") {
-             header('Location: /boleto?id=' . urlencode($registro->token));
+            header('Location: /boleto?id=' . urlencode($registro->token));
             return;
         }
-        }
+    } 
+        $tablaEventos = EventosRegistros::where('registro_id', $registro->id);
+        
 
-        $router->render( 'registro/conferencias', [
-            'titulo' => 'Elige Workshops y Conferencias',
-            'eventos' => $eventos_formateados, 
-            'regalos' => $regalos,
-        ]);
+
+        
+        if (is_auth()){
+            $nombre = $_SESSION['nombre'];     
+            } 
+            $datos_2 = [
+                'titulo' => 'Elige Workshops y Conferencias',
+                'eventos' => $eventos_formateados, 
+                'regalos' => $regalos,
+                'registro_eventos'=> $tablaEventos,        
+                'registro'=> $registro        
+            ];
+            if (is_auth()) {
+                $datos_2['nombre'] = $nombre;
+            }
+        $router->render( 'registro/conferencias', $datos_2);
     }
 
 
 }
-
-/*crear un metodo para que muestre en la url de boleto los eventos que eligio el usuario mas el boleto. 
-en conferencias.php de registro poner el action a boleto en el submit*/

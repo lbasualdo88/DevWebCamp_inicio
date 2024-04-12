@@ -81,6 +81,10 @@ import Swal from 'sweetalert2'
                 resumen.removeChild(resumen.firstChild);
             }
         }
+       
+        
+
+
 
         async function submitFormulario(e) {
             e.preventDefault();
@@ -88,6 +92,10 @@ import Swal from 'sweetalert2'
             // Obtener el regalo
             const regaloId = document.querySelector('#regalo').value
             const eventosId = eventos.map(evento => evento.id)
+
+            const logo = document.querySelector('#header__logo').value
+            const logo2 = document.querySelector('#barra__logo').value
+            const btnNav = document.querySelectorAll('#navegacion__enlace').value
 
             if(eventosId.length === 0 || regaloId === '') {
                  Swal.fire({
@@ -98,7 +106,6 @@ import Swal from 'sweetalert2'
                 })
                 return;
             }
-
             // Objeto de formdata
             const datos = new FormData();
             datos.append('eventos', eventosId)
@@ -111,7 +118,7 @@ import Swal from 'sweetalert2'
             })
             const resultado = await respuesta.json();
 
-            console.log(resultado)
+            
 
             if(resultado.resultado) {
                 Swal.fire(
@@ -132,3 +139,4 @@ import Swal from 'sweetalert2'
 
     }
 })();
+

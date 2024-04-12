@@ -1,11 +1,22 @@
 <header class="header">
     <div class="header__contenedor">
         <nav class="header__navegacion">
-            <?php if(is_auth()) { ?>
-                <a href="<?php echo is_admin() ? '/admin/dashboard' : (isset($registro->token) ? '/boleto?id=' . $registro->token : '/finalizar-registro');?>" 
-                class="header__enlace">
-                <?php echo isset($registro->token)  ? 'Administrar' : 'Tu Boleto'; ?>
-                </a>
+
+            <?php if(is_auth()) { ?>               
+                <p class="header__enlace"> <?php echo 'Hola:'. $nombre ?></p>
+                <?php if(is_admin()) { ?>
+                  <a href="/admin/dashboard" class="header__enlace">Administrar</a>
+                  <?php } else {?>
+                  
+                    <?php  if(!isset($registro->token)){?>
+                        <a href="/finalizar-registro" class="header__enlace">Finalizar-Compra</a>                        
+                    <?php } elseif (isset($registro->token) && $registro->paquete_id ==='1' && !isset($tablaEventos)) {?>
+                        <a href="/finalizar-registro/conferencias" class="header__enlace">Finalizar Registro</a>
+                        <?php } else {?>
+                        <a href="<?php echo '/boleto?id=' . $registro->token ?>" class="header__enlace">Tu Boleto</a>
+                    <?php  } ?>
+                    <?php } ?>
+                
                 <form method="POST" action="/logout" class="header__form">
                     <input type="submit" value="Cerrar Sesión" class="header__submit">
                 </form>
@@ -24,8 +35,9 @@
 
             <p class="header__texto">Octubre 5-6 - 2023</p>
             <p class="header__texto header__texto--modalidad">En Línea - Presencial</p>
-
+            <?php if(!is_auth()) { ?>
             <a href="/registro" class="header__boton">Comprar Pase</a>
+            <?php } ?>
         </div>
     </div>
 </header>
@@ -40,8 +52,13 @@
             <a href="/devwebcamp" class="navegacion__enlace <?php echo pagina_actual('/devwebcamp') ? 'navegacion__enlace--actual' : ''; ?>">Evento</a>
             <a href="/paquetes" class="navegacion__enlace <?php echo pagina_actual('/paquetes') ? 'navegacion__enlace--actual' : ''; ?>">Paquetes</a>
             <a href="/workshops-conferencias" class="navegacion__enlace <?php echo pagina_actual('/workshops-conferencias') ? 'navegacion__enlace--actual' : ''; ?>">Workshops / Conferencias</a>
+            <?php if(!is_auth()) { ?>
             <a href="/registro" class="navegacion__enlace <?php echo pagina_actual('/registro') ? 'navegacion__enlace--actual' : ''; ?>">Comprar Pase</a>
-            
+            <?php } ?>
         </nav>
     </div>
 </div>
+
+
+
+
